@@ -18,7 +18,7 @@ with st.form("prediction_form"):
     st.header("Enter your details")
     
     gender = st.selectbox("Gender", options=[0, 1], format_func=lambda x: "Male" if x == 0 else "Female")
-    age = st.number_input("Age", min_value=6, max_value=100, step=1)
+    age = st.number_input("Age", min_value=18, max_value=30, step=1)
     academic_pressure = st.slider("Academic Pressure", min_value=0, max_value=5, step=1)
     cgpa = st.number_input("CGPA (Cumulative Grade Point Average)", min_value=0.0, max_value=10.0, step=0.01)
     study_satisfaction = st.slider("Study Satisfaction", min_value=0, max_value=5, step=1)
