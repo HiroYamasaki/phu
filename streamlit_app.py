@@ -1,151 +1,91 @@
-import streamlit as st
+import os
+import joblib
+import numpy as np
 import pandas as pd
-import math
-from pathlib import Path
+import streamlit as st
 
-# Set the title and favicon that appear in the Browser's tab bar.
-st.set_page_config(
-    page_title='GDP dashboard',
-    page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
-)
+# Load the models and encoders
+model = joblib.load('depression_model_best.pkl')
+scaler = joblib.load('scaler_best.pkl')
+label_encoder_new_degree = joblib.load('label_encoder_new_degree_best.pkl')
+label_encoder_depression = joblib.load('label_encoder_depression_best.pkl')
 
-# -----------------------------------------------------------------------------
-# Declare some useful functions.
+# Streamlit app
+st.title("Depression Prediction")
 
-@st.cache_data
-def get_gdp_data():
-    """Grab GDP data from a CSV file.
+# Form for user input
+with st.form("prediction_form"):
+    st.header("Enter your details")
+    
+    gender = st.selectbox("Gender", options=[0, 1], format_func=lambda x: "Male" if x == 0 else "Female")
+    age = st.number_input("Age", min_value=6, max_value=100, step=1)
+    academic_pressure = st.slider("Academic Pressure", min_value=0, max_value=5, step=1)
+    cgpa = st.number_input("CGPA (Cumulative Grade Point Average)", min_value=0.0, max_value=10.0, step=0.01)
+    study_satisfaction = st.slider("Study Satisfaction", min_value=0, max_value=5, step=1)
+    sleep_duration = st.selectbox("Sleep Duration", options=[0, 1, 2, 3], format_func=lambda x: ["Less than 5 hours", "5-6 hours", "7-8 hours", "More than 8 hours"][x])
+    work_study_hours = st.slider("Work/Study Hours", min_value=0, max_value=12, step=1)
+    financial_stress = st.slider("Financial Stress", min_value=0, max_value=5, step=1)
+    dietary_habits = st.selectbox("Dietary Habits", options=[0, 1, 2], format_func=lambda x: ["Healthy", "Unhealthy", "Moderate"][x])
+    new_degree = st.selectbox("New Degree", options=[0, 1, 2], format_func=lambda x: ["Graduated", "Post Graduated", "Higher Secondary"][x])
+    suicidal_thoughts = st.selectbox("Have you ever had suicidal thoughts?", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Yes")
+    family_history = st.selectbox("Family History of Mental Illness", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Yes")
+    
+    submit_button = st.form_submit_button(label="Predict")
 
-    This uses caching to avoid having to read the file every time. If we were
-    reading from an HTTP endpoint instead of a file, it's a good idea to set
-    a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
-    """
+if submit_button:
+    data = {
+        'gender': gender,
+        'age': age,
+        'academic_pressure': academic_pressure,
+        'cgpa': cgpa,
+        'study_satisfaction': study_satisfaction,
+        'sleep_duration': sleep_duration,
+        'work_study_hours': work_study_hours,
+        'financial_stress': financial_stress,
+        'dietary_habits': dietary_habits,
+        'new_degree': new_degree,
+        'suicidal_thoughts': suicidal_thoughts,
+        'family_history': family_history
+    }
+    
+    df = pd.DataFrame([data])
 
-    # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-    DATA_FILENAME = Path(__file__).parent/'data/gdp_data.csv'
-    raw_gdp_df = pd.read_csv(DATA_FILENAME)
+    # Preprocess the input data
+    try:
+        df['Gender'] = df['gender'].astype(int)
+        df['Age'] = df['age'].astype(int)
+        df['Academic Pressure'] = df['academic_pressure'].astype(float)
+        df['CGPA'] = df['cgpa'].astype(float)
+        df['Study Satisfaction'] = df['study_satisfaction'].astype(float)
+        df['Sleep Duration'] = df['sleep_duration'].astype(int)
+        df['Work/Study Hours'] = df['work_study_hours'].astype(float)
+        df['Financial Stress'] = df['financial_stress'].astype(float)
+        df['Dietary Habits'] = df['dietary_habits'].astype(int)
+        df['New_Degree'] = df['new_degree'].astype(int)
+        df['Have you ever had suicidal thoughts ?'] = df['suicidal_thoughts'].astype(int)
+        df['Family History of Mental Illness'] = df['family_history'].astype(int)
+    except ValueError as e:
+        st.error(f"Error in input data: {e}")
+    
+    # Ensure the columns are in the correct order
+    column_order = ['Gender', 'Age', 'Academic Pressure', 'CGPA', 'Study Satisfaction', 'Sleep Duration', 
+                    'Dietary Habits', 'Have you ever had suicidal thoughts ?', 'Work/Study Hours', 'Financial Stress', 
+                    'Family History of Mental Illness', 'New_Degree']
+    df = df[column_order]
 
-    MIN_YEAR = 1960
-    MAX_YEAR = 2022
+    # Scale numerical features
+    numerical_features = ['Age', 'Academic Pressure', 'CGPA', 'Study Satisfaction', 'Sleep Duration', 
+                          'Work/Study Hours', 'Financial Stress']
+    df[numerical_features] = scaler.transform(df[numerical_features])
 
-    # The data above has columns like:
-    # - Country Name
-    # - Country Code
-    # - [Stuff I don't care about]
-    # - GDP for 1960
-    # - GDP for 1961
-    # - GDP for 1962
-    # - ...
-    # - GDP for 2022
-    #
-    # ...but I want this instead:
-    # - Country Name
-    # - Country Code
-    # - Year
-    # - GDP
-    #
-    # So let's pivot all those year-columns into two: Year and GDP
-    gdp_df = raw_gdp_df.melt(
-        ['Country Code'],
-        [str(x) for x in range(MIN_YEAR, MAX_YEAR + 1)],
-        'Year',
-        'GDP',
-    )
+    # Predict the result
+    prediction = model.predict(df)
+    prediction_label = label_encoder_depression.inverse_transform(prediction)[0]
 
-    # Convert years from string to integers
-    gdp_df['Year'] = pd.to_numeric(gdp_df['Year'])
+    # Convert prediction_label to a native Python type
+    prediction_label = int(prediction_label)
 
-    return gdp_df
-
-gdp_df = get_gdp_data()
-
-# -----------------------------------------------------------------------------
-# Draw the actual page
-
-# Set the title that appears at the top of the page.
-'''
-# :earth_americas: GDP dashboard
-
-Browse GDP data from the [World Bank Open Data](https://data.worldbank.org/) website. As you'll
-notice, the data only goes to 2022 right now, and datapoints for certain years are often missing.
-But it's otherwise a great (and did I mention _free_?) source of data.
-'''
-
-# Add some spacing
-''
-''
-
-min_value = gdp_df['Year'].min()
-max_value = gdp_df['Year'].max()
-
-from_year, to_year = st.slider(
-    'Which years are you interested in?',
-    min_value=min_value,
-    max_value=max_value,
-    value=[min_value, max_value])
-
-countries = gdp_df['Country Code'].unique()
-
-if not len(countries):
-    st.warning("Select at least one country")
-
-selected_countries = st.multiselect(
-    'Which countries would you like to view?',
-    countries,
-    ['DEU', 'FRA', 'GBR', 'BRA', 'MEX', 'JPN'])
-
-''
-''
-''
-
-# Filter the data
-filtered_gdp_df = gdp_df[
-    (gdp_df['Country Code'].isin(selected_countries))
-    & (gdp_df['Year'] <= to_year)
-    & (from_year <= gdp_df['Year'])
-]
-
-st.header('GDP over time', divider='gray')
-
-''
-
-st.line_chart(
-    filtered_gdp_df,
-    x='Year',
-    y='GDP',
-    color='Country Code',
-)
-
-''
-''
-
-
-first_year = gdp_df[gdp_df['Year'] == from_year]
-last_year = gdp_df[gdp_df['Year'] == to_year]
-
-st.header(f'GDP in {to_year}', divider='gray')
-
-''
-
-cols = st.columns(4)
-
-for i, country in enumerate(selected_countries):
-    col = cols[i % len(cols)]
-
-    with col:
-        first_gdp = first_year[first_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-        last_gdp = last_year[last_year['Country Code'] == country]['GDP'].iat[0] / 1000000000
-
-        if math.isnan(first_gdp):
-            growth = 'n/a'
-            delta_color = 'off'
-        else:
-            growth = f'{last_gdp / first_gdp:,.2f}x'
-            delta_color = 'normal'
-
-        st.metric(
-            label=f'{country} GDP',
-            value=f'{last_gdp:,.0f}B',
-            delta=growth,
-            delta_color=delta_color
-        )
+    if prediction_label == 1:
+        st.error("Depression Detected")
+    else:
+        st.success("No Depression Detected")
