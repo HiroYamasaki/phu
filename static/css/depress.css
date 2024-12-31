@@ -1,0 +1,77 @@
+#depression-prediction #advice-message.no-depression {
+    background-color: #e1ece1;
+}
+#depression-prediction #advice-message.no-depression h4 {
+    color: #228B22; /* Màu xanh lá đậm */
+}
+#work_study_hours {
+    width: 100%;
+}
+
+#work_study_hours_value {
+    display: inline-block;
+    margin-left: 10px;
+    font-weight: bold;
+}
+#depression-prediction {
+    background-color: #f8f9fa;
+}
+
+#depression-prediction .container {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 50px;
+    margin-bottom: 50px;
+}
+
+#depression-prediction .step {
+    display: none;
+}
+
+#depression-prediction .step.active {
+    display: block;
+}
+
+#depression-prediction .progress-bar {
+    height: 30px;
+    font-size: 14px;
+    text-align: center;
+}
+
+#depression-prediction .progress {
+    height: 30px;
+    border-radius: 40px;
+}
+
+#depression-prediction .is-invalid {
+    border-color: #dc3545;
+}
+
+#depression-prediction .is-valid {
+    border-color: #1CBCCF;
+}
+
+#depression-prediction #advice-message {
+    background-color: #f2dede;
+    /* Màu hồng nhạt báo hiệu cảnh báo */
+    border: 1px solid #d0ccc7;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+
+#depression-prediction #advice-message h4 {
+    color: #721c24;
+    /* Màu đỏ đậm để thu hút sự chú ý */
+    font-weight: bold;
+}
+
+#depression-prediction #advice-message p {
+    color: #6c757d;
+    /* Màu xám đậm để dễ đọc */
+}
+.bg-success {
+    background-color: #1CBCCF !important;
+}
