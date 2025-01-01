@@ -10,6 +10,14 @@ scaler = joblib.load('scaler_best.pkl')
 label_encoder_new_degree = joblib.load('label_encoder_new_degree_best.pkl')
 label_encoder_depression = joblib.load('label_encoder_depression_best.pkl')
 
+# City encoding
+city_encoding = {
+    'Agra': 0, 'Ahmedabad': 1, 'Bangalore': 2, 'Bhopal': 3, 'Chennai': 4, 'Delhi': 5, 'Faridabad': 6, 'Ghaziabad': 7,
+    'Hyderabad': 8, 'Indore': 9, 'Jaipur': 10, 'Kalyan': 11, 'Kanpur': 12, 'Kolkata': 13, 'Lucknow': 14, 'Ludhiana': 15,
+    'Meerut': 16, 'Mumbai': 17, 'Nagpur': 18, 'Nashik': 19, 'Patna': 20, 'Pune': 21, 'Rajkot': 22, 'Srinagar': 23,
+    'Surat': 24, 'Thane': 25, 'Vadodara': 26, 'Varanasi': 27, 'Vasai-Virar': 28, 'Visakhapatnam': 29
+}
+
 # Streamlit app
 st.title("Depression Prediction")
 
@@ -29,7 +37,8 @@ with st.form("prediction_form"):
     new_degree = st.selectbox("New Degree", options=[0, 1, 2], format_func=lambda x: ["Graduated", "Post Graduated", "Higher Secondary"][x])
     suicidal_thoughts = st.selectbox("Have you ever had suicidal thoughts?", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Yes")
     family_history = st.selectbox("Family History of Mental Illness", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Yes")
-    
+    city = st.selectbox("City", options=list(city_encoding.keys()))
+
     submit_button = st.form_submit_button(label="Predict")
 
 if submit_button:
@@ -45,7 +54,8 @@ if submit_button:
         'dietary_habits': dietary_habits,
         'new_degree': new_degree,
         'suicidal_thoughts': suicidal_thoughts,
-        'family_history': family_history
+        'family_history': family_history,
+        'city': city
     }
     
     df = pd.DataFrame([data])
@@ -64,13 +74,14 @@ if submit_button:
         df['New_Degree'] = df['new_degree'].astype(int)
         df['Have you ever had suicidal thoughts ?'] = df['suicidal_thoughts'].astype(int)
         df['Family History of Mental Illness'] = df['family_history'].astype(int)
+        df['City_encoded'] = df['city'].map(city_encoding).astype(int)
     except ValueError as e:
         st.error(f"Error in input data: {e}")
     
     # Ensure the columns are in the correct order
     column_order = ['Gender', 'Age', 'Academic Pressure', 'CGPA', 'Study Satisfaction', 'Sleep Duration', 
                     'Dietary Habits', 'Have you ever had suicidal thoughts ?', 'Work/Study Hours', 'Financial Stress', 
-                    'Family History of Mental Illness', 'New_Degree']
+                    'Family History of Mental Illness', 'New_Degree', 'City_encoded']
     df = df[column_order]
 
     # Scale numerical features
