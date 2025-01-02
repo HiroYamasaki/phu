@@ -4,6 +4,9 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+# Set the number of cores to use for joblib
+os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Adjust this number based on your system
+
 # Load the models and encoders
 model = joblib.load('depression_model_best.pkl')
 scaler = joblib.load('scaler_best.pkl')
@@ -100,8 +103,9 @@ if submit_button:
     df = df[column_order]
 
     # Scale numerical features
-    numerical_features = ['Age', 'Academic Pressure', 'CGPA', 'Study Satisfaction', 'Sleep Duration', 
-                          'Work/Study Hours', 'Financial Stress']
+    numerical_features = ['Gender', 'Age', 'Academic Pressure', 'CGPA', 'Study Satisfaction', 'Sleep Duration', 
+                          'Dietary Habits', 'Have you ever had suicidal thoughts ?', 'Work/Study Hours', 
+                          'Financial Stress', 'Family History of Mental Illness', 'New_Degree', 'City_encoded']
     df[numerical_features] = scaler.transform(df[numerical_features])
 
     # Predict the result
