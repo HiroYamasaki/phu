@@ -4,11 +4,15 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+# Set the number of cores to use for joblib
+os.environ['LOKY_MAX_CPU_COUNT'] = '4'  # Adjust this number based on your system
+
 # Load the models and encoders
 model = joblib.load('depression_model_best.pkl')
 scaler = joblib.load('scaler_best.pkl')
 label_encoder_new_degree = joblib.load('label_encoder_new_degree_best.pkl')
 label_encoder_depression = joblib.load('label_encoder_depression_best.pkl')
+
 # City encoding
 city_encoding = {
     'Agra': 0, 'Ahmedabad': 1, 'Bangalore': 2, 'Bhopal': 3, 'Chennai': 4, 'Delhi': 5, 'Faridabad': 6, 'Ghaziabad': 7,
@@ -106,12 +110,15 @@ if submit_button:
 
     # Predict the result
     prediction = model.predict(df)
+    prediction_proba = model.predict_proba(df)
+
     prediction_label = label_encoder_depression.inverse_transform(prediction)[0]
+    prediction_probability = prediction_proba[0][prediction[0]]
 
     # Convert prediction_label to a native Python type
     prediction_label = int(prediction_label)
 
     if prediction_label == 1:
-        st.error("Depression Detected")
+        st.error(f"Depression Detected with probability {prediction_probability * 100:.2f}%")
     else:
-        st.success("No Depression Detected")
+        st.success(f"No Depression Detected with probability {prediction_probability * 100:.2f}%")
