@@ -5,26 +5,10 @@ import pandas as pd
 import streamlit as st
 
 # Load the models and encoders
-model_path = 'depression_model_best.pkl'
-scaler_path = 'scaler_best.pkl'
-label_encoder_new_degree_path = 'label_encoder_new_degree_best.pkl'
-label_encoder_depression_path = 'label_encoder_depression_best.pkl'
-
-# Check if model files exist
-if not os.path.exists(model_path):
-    st.error(f"Model file {model_path} not found.")
-if not os.path.exists(scaler_path):
-    st.error(f"Scaler file {scaler_path} not found.")
-if not os.path.exists(label_encoder_new_degree_path):
-    st.error(f"Label encoder file {label_encoder_new_degree_path} not found.")
-if not os.path.exists(label_encoder_depression_path):
-    st.error(f"Label encoder file {label_encoder_depression_path} not found.")
-
-# Load the models and encoders
-model = joblib.load(model_path)
-scaler = joblib.load(scaler_path)
-label_encoder_new_degree = joblib.load(label_encoder_new_degree_path)
-label_encoder_depression = joblib.load(label_encoder_depression_path)
+model = joblib.load('depression_model_best.pkl')
+scaler = joblib.load('scaler_best.pkl')
+label_encoder_new_degree = joblib.load('label_encoder_new_degree_best.pkl')
+label_encoder_depression = joblib.load('label_encoder_depression_best.pkl')
 
 # City encoding
 city_encoding = {
