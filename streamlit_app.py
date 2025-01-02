@@ -75,6 +75,21 @@ if submit_button:
         df['Have you ever had suicidal thoughts ?'] = df['suicidal_thoughts'].astype(int)
         df['Family History of Mental Illness'] = df['family_history'].astype(int)
         df['City_encoded'] = df['city'].map(city_encoding).astype(int)
+
+        # Ensure CGPA is a float
+        df['CGPA'] = df['CGPA'].astype(float)
+
+        # Cluster CGPA into specified ranges
+        bins = [0, 5, 6, 7, 8, 9, 10]
+        labels = ['<5', '5 - <6', '6 - <7', '7 - <8', '8 - <9', '9 - 10']
+        df['CGPA_range'] = pd.cut(df['CGPA'], bins=bins, labels=labels, right=False)
+
+        # Print the CGPA range
+        st.write(f"CGPA {df['CGPA'].values[0]} falls into range {df['CGPA_range'].values[0]}")
+
+        # Convert CGPA labels to numerical values
+        cgpa_map = {'<5': 0, '5 - <6': 1, '6 - <7': 2, '7 - <8': 3, '8 - <9': 4, '9 - 10': 5}
+        df['CGPA'] = df['CGPA_range'].map(cgpa_map)
     except ValueError as e:
         st.error(f"Error in input data: {e}")
     
